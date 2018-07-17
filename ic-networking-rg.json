@@ -1,0 +1,112 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "australiasoutheast",
+            "allowedValues": [
+                "australiaeast",
+                "australiasoutheast"
+            ],
+            "type": "string",
+            "metadata": {
+                "description": "Deployment location"
+            }
+        },
+        "vnet_name": {
+            "defaultValue": "ic-vnet",
+            "type": "string"
+        },
+        "vnet_prefix": {
+            "defaultValue": "10.232.0.0/23",
+            "type": "string"
+        },
+        "environment": {
+            "defaultValue": "ic",
+            "type": "string"
+        },
+        "tier": {
+            "defaultValue": [
+                "GatewaySubnet",
+                "Inside",
+                "Outside",
+                "Foundation"
+            ],
+            "type": "array"
+        },
+        "GatewaySubnet_prefix": {
+            "defaultValue": "10.232.0.0/25",
+            "type": "string"
+        },
+        "icSnInside_prefix": {
+            "defaultValue": "10.232.0.128/25",
+            "type": "string"
+        },
+        "icSnOutside_prefix": {
+            "defaultValue": "10.232.1.0/25",
+            "type": "string"
+        },
+        "icSnfoundation_prefix": {
+            "defaultValue": "10.232.1.128/25",
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '-nsg')]",
+            "apiVersion": "2017-06-01",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "NsgCopy",
+                "count": "[length(parameters('tier'))]"
+            },
+            "properties": {
+                "securityRules": []
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnet_name')]",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnet_prefix')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": []
+                },
+                "subnets": [],
+                "virtualNetworkPeerings": []
+            },
+            "dependsOn": [
+                "NsgCopy"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[if(equals(parameters('tier')[copyIndex()],'GatewaySubnet'),concat(parameters('vnet_name'), '/', parameters('tier')[copyIndex()]),concat(parameters('vnet_name'), '/', parameters('environment'), 'Sn', parameters('tier')[copyIndex()]))]",
+            "apiVersion": "2017-10-01",
+            "copy": {
+                "name": "SnCopy",
+                "count": "[length(parameters('tier'))]",
+                "mode": "Serial"
+            },
+            "properties": {
+                "addressPrefix": "[if(equals(parameters('tier')[copyIndex()],'GatewaySubnet'),parameters(concat(parameters('tier')[copyIndex()], '_prefix')),parameters(concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '_prefix')))]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '-nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "NsgCopy",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,132 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location": {
+            "defaultValue": "australiasoutheast",
+            "allowedValues": [
+                "australiaeast",
+                "australiasoutheast"
+            ],
+            "type": "string",
+            "metadata": {
+                "description": "Deployment location"
+            }
+        },
+        "vnet_name": {
+            "defaultValue": "dmz-vnet",
+            "type": "string"
+        },
+        "vnet_prefix": {
+            "defaultValue": "10.232.8.0/21",
+            "type": "string"
+        },
+        "environment": {
+            "defaultValue": "dmz",
+            "type": "string"
+        },
+        "tier": {
+            "defaultValue": [
+                "Fe",
+                "App",
+                "Db",
+                "GatewayInside",
+                "GatewayOutside",
+                "Inside",
+                "Outside",
+                "Foundation"
+            ],
+            "type": "array"
+        },
+        "dmzSnFe_prefix": {
+            "defaultValue": "10.232.11.0/24",
+            "type": "string"
+        },
+        "dmzSnApp_prefix": {
+            "defaultValue": "10.232.10.0/24",
+            "type": "string"
+        },
+        "dmzSnDb_prefix": {
+            "defaultValue": "10.232.9.0/24",
+            "type": "string"
+        },
+        "dmzSnfoundation_prefix": {
+            "defaultValue": "10.232.8.0/24",
+            "type": "string"
+        },
+        "dmzSngatewayInside_prefix": {
+            "defaultValue": "10.232.12.0/24",
+            "type": "string"
+        },
+        "dmzSngatewayOutside_prefix": {
+            "defaultValue": "10.232.13.0/24",
+            "type": "string"
+        },
+        "dmzSnInside_prefix": {
+            "defaultValue": "10.232.14.0/24",
+            "type": "string"
+        },
+        "dmzSnOutside_prefix": {
+            "defaultValue": "10.232.15.0/24",
+            "type": "string"
+        }
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '-nsg')]",
+            "apiVersion": "2017-06-01",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "NsgCopy",
+                "count": "[length(parameters('tier'))]"
+            },
+            "properties": {
+                "securityRules": []
+            },
+            "dependsOn": []
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "name": "[parameters('vnet_name')]",
+            "apiVersion": "2017-10-01",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnet_prefix')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": []
+                },
+                "subnets": [],
+                "virtualNetworkPeerings": []
+            },
+            "dependsOn": [
+                "NsgCopy"
+            ]
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "name": "[concat(parameters('vnet_name'), '/', parameters('environment'), 'Sn', parameters('tier')[copyIndex()])]",
+            "apiVersion": "2017-10-01",
+            "copy": {
+                "name": "SnCopy",
+                "count": "[length(parameters('tier'))]",
+                "mode": "Serial"
+            },
+            "properties": {
+                "addressPrefix": "[parameters(concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '_prefix'))]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '-nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "NsgCopy",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+            ]
+        }
+    ]
+}

@@ -1,0 +1,277 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "location" : {
+            "type" : "string",
+            "allowedValues" : ["australiaeast", "australiasoutheast"],
+            "defaultValue": "australiasoutheast",
+            "metadata" : {
+                "description" : "Deployment location"
+            }
+        },
+        "vnet_name": {
+            "type" : "string",
+            "defaultValue": "prod-vnet"
+        },
+        "vnet_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.128.0/17"
+        },
+        "environment": { 
+            "type": "array", 
+                "defaultValue": [ 
+                "prod", 
+                "preprod", 
+                "test",
+                "dev"
+             ]
+        },
+        "frontEndTier_name": {
+            "type" : "string",
+            "defaultValue": "Fe"
+        },
+        "appTier_name": {
+            "type" : "string",
+            "defaultValue": "App"
+        },
+        "databaseTier_name": {
+            "type" : "string",
+            "defaultValue": "Db"
+        },
+        "foundationTier_name": {
+            "type" : "string",
+            "defaultValue": "foundation"
+        },
+        "prodSnFe_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.224.0/21"
+        },
+        "prodSnApp_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.216.0/21"
+        },
+        "prodSnDb_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.208.0/21"
+        },
+        "preprodSnFe_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.200.0/21"
+        },
+        "preprodSnApp_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.192.0/21"
+        },
+        "preprodSnDb_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.184.0/21"
+        },
+        "testSnFe_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.176.0/21"
+        },
+        "testSnApp_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.168.0/21"
+        },
+        "testSnDb_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.160.0/21"
+        },
+        "devSnFe_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.152.0/21"
+        },
+        "devSnApp_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.144.0/21"
+        },
+        "devSnDb_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.136.0/21"
+        },
+        "foundationSn_prefix": {
+            "type" : "string",
+            "defaultValue": "10.232.128.0/21"
+        }
+    },
+
+    "variables": {
+        "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]",
+        "foundationSn-nsg": "foundationSn-nsg",
+        "foundationSn_name": "foundationSn"
+    },
+
+    "resources": [
+        {
+            "apiVersion": "2017-06-01",
+            "name": "[variables('foundationSn-nsg')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "location": "[parameters('location')]",
+            "properties": {
+                "securityRules": []
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2017-06-01",
+            "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'Fe', '-nsg')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "FeNsgCopy",
+                "count": "[length(parameters('environment'))]"
+            },
+            "properties": {
+                "securityRules": []
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2017-06-01",
+            "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'App', '-nsg')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "AppNsgCopy",
+                "count": "[length(parameters('environment'))]"
+            },
+            "properties": {
+                "securityRules": []
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2017-06-01",
+            "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'Db', '-nsg')]",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "location": "[parameters('location')]",
+            "copy": {
+                "name": "DbNsgCopy",
+                "count": "[length(parameters('environment'))]"
+            },
+            "properties": {
+                "securityRules": []
+            },
+            "dependsOn": []
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "name": "[parameters('vnet_name')]",
+            "type": "Microsoft.Network/virtualNetworks",
+            "location": "[parameters('location')]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "[parameters('vnet_prefix')]"
+                    ]
+                },
+                "dhcpOptions": {
+                    "dnsServers": []
+                },
+                "subnets": [],
+                "virtualNetworkPeerings": []
+            },
+            "dependsOn": [
+                "FeNsgCopy",
+                "AppNsgCopy",
+                "DbNsgCopy",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('foundationSn-nsg'))]"
+            ]
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnet_name'), '/', parameters('foundationTier_name'), 'Sn')]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "properties": {
+                "addressPrefix": "[parameters(concat(parameters('foundationTier_name'), 'Sn', '_prefix'))]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('foundationTier_name'), 'Sn', '-nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "FeNsgCopy",
+                "AppNsgCopy",
+                "DbNsgCopy",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('foundationSn-nsg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+            ]
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnet_name'), '/', parameters('environment')[copyIndex()], 'Sn', parameters('frontEndTier_name'))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "copy": {
+                "name": "FeSnCopy",
+                "mode": "Serial",
+                "count": "[length(parameters('environment'))]"
+            },
+            "properties": {
+                "addressPrefix": "[parameters(concat(parameters('environment')[copyIndex()], 'Sn', parameters('frontEndTier_name'), '_prefix'))]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environment')[copyIndex()], 'Sn', parameters('frontEndTier_name'), '-nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "FeNsgCopy",
+                "AppNsgCopy",
+                "DbNsgCopy",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('foundationSn-nsg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), variables('foundationSn_name'))]"
+            ]
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnet_name'), '/', parameters('environment')[copyIndex()], 'Sn', parameters('appTier_name'))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "copy": {
+                "name": "AppSnCopy",
+                "mode": "Serial",
+                "count": "[length(parameters('environment'))]"
+            },
+            "properties": {
+                "addressPrefix": "[parameters(concat(parameters('environment')[copyIndex()], 'Sn', parameters('appTier_name'), '_prefix'))]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environment')[copyIndex()], 'Sn', parameters('appTier_name'), '-nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "FeNsgCopy",
+                "AppNsgCopy",
+                "DbNsgCopy",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('foundationSn-nsg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), variables('foundationSn_name'))]",
+                "FeSnCopy"
+            ]
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnet_name'), '/', parameters('environment')[copyIndex()], 'Sn', parameters('databaseTier_name'))]",
+            "type": "Microsoft.Network/virtualNetworks/subnets",
+            "copy": {
+                "name": "DbSnCopy",
+                "mode": "Serial",
+                "count": "[length(parameters('environment'))]"
+            },
+            "properties": {
+                "addressPrefix": "[parameters(concat(parameters('environment')[copyIndex()], 'Sn', parameters('databaseTier_name'), '_prefix'))]",
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', concat(parameters('environment')[copyIndex()], 'Sn', parameters('databaseTier_name'), '-nsg'))]"
+                }
+            },
+            "dependsOn": [
+                "FeNsgCopy",
+                "AppNsgCopy",
+                "DbNsgCopy",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('foundationSn-nsg'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('vnet_name'), variables('foundationSn_name'))]",
+                "FeSnCopy",
+                "AppSnCopy"
+            ]
+        }
+    ]
+}
