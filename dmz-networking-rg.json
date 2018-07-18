@@ -71,7 +71,12 @@
             "type": "string"
         }
     },
-    "variables": {},
+    "variables": {
+        "prod-resourceGroup_name": "prod-networking-rg",
+        "prod-vnet_name": "prod-vnet",
+        "prod-vnetid": "[resourceId(variables('prod-resourceGroup_name'), 'Microsoft.Network/virtualNetworks',variables('prod-vnet_name'))]",
+        "dmz-prod-peering_name": "dmz-prod-peering"
+    },
     "resources": [
         {
             "type": "Microsoft.Network/networkSecurityGroups",
@@ -127,6 +132,26 @@
                 "NsgCopy",
                 "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
             ]
+        },
+        {
+            "apiVersion": "2017-10-01",
+            "name": "[concat(parameters('vnet_name'), '/',variables('dmz-prod-peering_name'))]",
+            "type": "Microsoft.Network/virtualNetworks/virtualNetworkPeerings",
+            "location": "[parameters('location')]",
+            "properties":{
+                "allowVirtualNetworkAccess": "false",
+                "allowForwardedTraffic": "false",
+                "allowGatewayTransit": "false",
+                "useRemoteGateways": "false",
+                "remoteVirtualNetwork": {
+                    "id": "[variables('prod-vnetid')]"
+                }
+            },
+            "dependsOn": [
+                "NsgCopy",
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnet_name'))]"
+            ]
+            
         }
     ]
 }
