@@ -94,6 +94,18 @@
         "foundationSn_prefix": {
             "type" : "string",
             "defaultValue": "10.232.128.0/21"
+        },
+        "tag_owner" : {
+            "type": "string"
+        },
+        "tag_purpose" : {
+            "type": "string"
+        },
+        "tag_expiry" : {
+            "type": "string"
+        },
+        "tag_costCode" : {
+            "type": "string"
         }
     },
 
@@ -161,6 +173,13 @@
             "name": "[parameters('vnet_name')]",
             "type": "Microsoft.Network/virtualNetworks",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[parameters('vnet_name')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
