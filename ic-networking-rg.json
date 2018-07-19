@@ -49,6 +49,18 @@
         "icSnfoundation_prefix": {
             "defaultValue": "10.232.1.128/25",
             "type": "string"
+        },
+        "tag_owner" : {
+            "type": "string"
+        },
+        "tag_purpose" : {
+            "type": "string"
+        },
+        "tag_expiry" : {
+            "type": "string"
+        },
+        "tag_costCode" : {
+            "type": "string"
         }
     },
     "variables": {
@@ -63,6 +75,13 @@
             "name": "[concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '-nsg')]",
             "apiVersion": "2017-06-01",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[concat(parameters('environment'), 'Sn', parameters('tier')[copyIndex()], '-nsg')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "copy": {
                 "name": "NsgCopy",
                 "count": "[length(parameters('tier'))]"
@@ -77,6 +96,13 @@
             "name": "[parameters('vnet_name')]",
             "apiVersion": "2017-10-01",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[parameters('vnet_name')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [

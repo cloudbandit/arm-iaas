@@ -121,6 +121,13 @@
             "name": "[variables('foundationSn-nsg')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[variables('foundationSn-nsg')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "properties": {
                 "securityRules": []
             },
@@ -131,6 +138,13 @@
             "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'Fe', '-nsg')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'Fe', '-nsg')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "copy": {
                 "name": "FeNsgCopy",
                 "count": "[length(parameters('environment'))]"
@@ -145,6 +159,13 @@
             "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'App', '-nsg')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'App', '-nsg')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "copy": {
                 "name": "AppNsgCopy",
                 "count": "[length(parameters('environment'))]"
@@ -159,6 +180,13 @@
             "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'Db', '-nsg')]",
             "type": "Microsoft.Network/networkSecurityGroups",
             "location": "[parameters('location')]",
+            "tags": {
+                "name": "[concat(parameters('environment')[copyIndex()], 'Sn', 'Db', '-nsg')]",
+                "purpose": "[parameters('tag_purpose')]",
+                "owner": "[parameters('tag_owner')]",
+                "expiry": "[parameters('tag_expiry')]",
+                "costCode": "[parameters('tag_costCode')]"
+            },
             "copy": {
                 "name": "DbNsgCopy",
                 "count": "[length(parameters('environment'))]"
